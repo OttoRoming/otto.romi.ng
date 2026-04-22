@@ -1,154 +1,171 @@
 :root {
-  --primary: #f22c57;
-  --foreground: #ffffff;
-  --background: #2c3746;
+    --primary: #f22c57;
+    --foreground: #ffffff;
+    --background: #2c3746;
 
-  --black: #28333f;
-  --red: #f22c57;
-  --green: #28a09c;
-  --yellow: #ddab5c;
-  --blue: #176ef1;
-  --magenta: #af69dd;
-  --cyan: #4fb0b3;
-  --white: #879596;
+    --black: #28333f;
+    --red: #f22c57;
+    --green: #28a09c;
+    --yellow: #ddab5c;
+    --blue: #176ef1;
+    --magenta: #af69dd;
+    --cyan: #4fb0b3;
+    --white: #879596;
 
-  --bright-black: #2b3644;
-  --bright-red: #f22c57;
-  --bright-green: #2aacaa;
-  --bright-yellow: #f7c067;
-  --bright-blue: #176ef1;
-  --bright-magenta: #cb75f7;
-  --bright-cyan: #5cc6d1;
-  --bright-white: #9cacad;
+    --bright-black: #2b3644;
+    --bright-red: #f22c57;
+    --bright-green: #2aacaa;
+    --bright-yellow: #f7c067;
+    --bright-blue: #176ef1;
+    --bright-magenta: #cb75f7;
+    --bright-cyan: #5cc6d1;
+    --bright-white: #9cacad;
 }
 
-*, *::before, *::after {
-  box-sizing: border-box;
-  cursor: alias;
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    cursor: alias;
 }
 
 body {
-  position: relative;
+    position: relative;
 
-  background-color: var(--background);
-  color: var(--foreground);
+    background-color: var(--background);
+    color: var(--foreground);
 
-  margin: 0;
+    margin: 0;
 
-  padding-top: 2em;
+    padding-top: 2em;
 
-  display: flex;
-  justify-content: center;
+    display: flex;
+    justify-content: center;
+
+    font-family: monospace;
+    font-size: 150%;
 }
 
 .background {
-  position: absolute;
-  /* left: 0;
+    position: absolute;
+    /* left: 0;
   top: 0; */
-  inset: 0;
+    inset: 0;
 
-  /* height: 100%; */
-  overflow: hidden;
+    /* height: 100%; */
+    overflow: hidden;
 
-  opacity: 15%;
+    opacity: 15%;
 
-  z-index: -10;
-  user-select: none;
+    z-index: -10;
+    user-select: none;
 
-  & > .tile {
-    display: inline-block;
+    & > .tile {
+        display: inline-block;
 
-    height: 2em;
-    width: 2em;
+        height: 2em;
+        width: 2em;
 
-    border-width: 2px;
-    border-style: solid;
-    border-color: var(--white);
-    background-color: var(--background);
-  }
+        border-width: 2px;
+        border-style: solid;
+        border-color: var(--white);
+        background-color: var(--background);
+    }
 }
 
 .left {
     float: left;
     animation-direction: normal !important;
+    animation-duration: 0.9s !important;
 }
 
 .right {
     float: right;
     animation-direction: reverse !important;
+    animation-duration: 1.1s !important;
 }
 
 .c {
-  width:  30%;
-  aspect-ratio: 1 / 1;
+    width: 30%;
+    aspect-ratio: 1 / 1;
 
-  background-color: var(--yellow);
+    background-color: var(--yellow);
 
-  --p1:  calc((1  / 10 + (var(--i) / 100 * 1 / 5)) * 2 * pi);
-  --p2:  calc((2  / 10 + (var(--i) / 100 * 1 / 5)) * 2 * pi);
-  --p3:  calc((3  / 10 + (var(--i) / 100 * 1 / 5)) * 2 * pi);
-  --p4:  calc((4  / 10 + (var(--i) / 100 * 1 / 5)) * 2 * pi);
-  --p5:  calc((5  / 10 + (var(--i) / 100 * 1 / 5)) * 2 * pi);
-  --p6:  calc((6  / 10 + (var(--i) / 100 * 1 / 5)) * 2 * pi);
-  --p7:  calc((7  / 10 + (var(--i) / 100 * 1 / 5)) * 2 * pi);
-  --p8:  calc((8  / 10 + (var(--i) / 100 * 1 / 5)) * 2 * pi);
-  --p9:  calc((9  / 10 + (var(--i) / 100 * 1 / 5)) * 2 * pi);
-  --p10: calc((10 / 10 + (var(--i) / 100 * 1 / 5)) * 2 * pi);
-  --shape: polygon(
-    calc(50% + 50% * cos(var(--p1)))  calc(50% + 50% * sin(var(--p1))),
-    calc(50% + 30% * cos(var(--p2)))  calc(50% + 30% * sin(var(--p2))),
-    calc(50% + 50% * cos(var(--p3)))  calc(50% + 50% * sin(var(--p3))),
-    calc(50% + 30% * cos(var(--p4)))  calc(50% + 30% * sin(var(--p4))),
-    calc(50% + 50% * cos(var(--p5)))  calc(50% + 50% * sin(var(--p5))),
-    calc(50% + 30% * cos(var(--p6)))  calc(50% + 30% * sin(var(--p6))),
-    calc(50% + 50% * cos(var(--p7)))  calc(50% + 50% * sin(var(--p7))),
-    calc(50% + 30% * cos(var(--p8)))  calc(50% + 30% * sin(var(--p8))),
-    calc(50% + 50% * cos(var(--p9)))  calc(50% + 50% * sin(var(--p9))),
-    calc(50% + 30% * cos(var(--p10))) calc(50% + 30% * sin(var(--p10)))
-  );
+    --p1: calc((1 / 10 + (var(--i) / 100 * 1 / 5)) * 2 * pi);
+    --p2: calc((2 / 10 + (var(--i) / 100 * 1 / 5)) * 2 * pi);
+    --p3: calc((3 / 10 + (var(--i) / 100 * 1 / 5)) * 2 * pi);
+    --p4: calc((4 / 10 + (var(--i) / 100 * 1 / 5)) * 2 * pi);
+    --p5: calc((5 / 10 + (var(--i) / 100 * 1 / 5)) * 2 * pi);
+    --p6: calc((6 / 10 + (var(--i) / 100 * 1 / 5)) * 2 * pi);
+    --p7: calc((7 / 10 + (var(--i) / 100 * 1 / 5)) * 2 * pi);
+    --p8: calc((8 / 10 + (var(--i) / 100 * 1 / 5)) * 2 * pi);
+    --p9: calc((9 / 10 + (var(--i) / 100 * 1 / 5)) * 2 * pi);
+    --p10: calc((10 / 10 + (var(--i) / 100 * 1 / 5)) * 2 * pi);
+    --shape: polygon(
+        calc(50% + 50% * cos(var(--p1))) calc(50% + 50% * sin(var(--p1))),
+        calc(50% + 30% * cos(var(--p2))) calc(50% + 30% * sin(var(--p2))),
+        calc(50% + 50% * cos(var(--p3))) calc(50% + 50% * sin(var(--p3))),
+        calc(50% + 30% * cos(var(--p4))) calc(50% + 30% * sin(var(--p4))),
+        calc(50% + 50% * cos(var(--p5))) calc(50% + 50% * sin(var(--p5))),
+        calc(50% + 30% * cos(var(--p6))) calc(50% + 30% * sin(var(--p6))),
+        calc(50% + 50% * cos(var(--p7))) calc(50% + 50% * sin(var(--p7))),
+        calc(50% + 30% * cos(var(--p8))) calc(50% + 30% * sin(var(--p8))),
+        calc(50% + 50% * cos(var(--p9))) calc(50% + 50% * sin(var(--p9))),
+        calc(50% + 30% * cos(var(--p10))) calc(50% + 30% * sin(var(--p10)))
+    );
 
-  shape-outside: var(--shape);
-  clip-path: var(--shape);
+    shape-outside: var(--shape);
+    clip-path: var(--shape);
 
-  animation: iter 1s linear infinite;
+    animation: iter 1s linear infinite;
 
-  &:has(input:checked) {
-    animation-play-state: paused;
-    background-color: var(--red);
-  }
+    &:has(input:checked) {
+        animation-play-state: paused;
+        background-color: var(--red);
+    }
 }
 
 @property --i {
-  syntax: "<integer>";
-  initial-value: 0;
-  inherits: false;
+    syntax: "<integer>";
+    initial-value: 0;
+    inherits: false;
 }
 
 @keyframes iter {
-  from {
-    --i: 0;
-  }
-  to {
-    --i: 100;
-  }
+    from {
+        --i: 0;
+    }
+    to {
+        --i: 100;
+    }
 }
 
 main {
-  width: min(1000px, 90vw);
+    width: min(1000px, 90vw);
 
-  border-width: 2px;
-  border-style: solid;
-  border-color: var(--white);
+    border-width: 2px;
+    border-style: solid;
+    border-color: var(--white);
 
-  & > header {
-    font-size: 3em;
-    font-weight: 500;
-    padding: 0.25em 0.5em;
-  }
+    & h1 {
+        color: var(--red);
+        font-size: 3em;
+        padding-left: 1em;
+    }
 
-  & > p {
-    padding: 2em;
-  }
+    & h2 {
+        color: var(--green);
+        font-size: 2em;
+        padding-left: 0.8em;
+    }
+
+    & p {
+        padding: 2em;
+    }
+
+    & a {
+        color: var(--cyan);
+    }
 }
 
 footer {
