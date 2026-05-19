@@ -1,0 +1,63 @@
+.files {
+    font-size: 0;
+}
+
+.file {
+    font-size: 1rem;
+
+    --size: 7em;
+    width: var(--size);
+    height: var(--size);
+
+    display: inline-block;
+    border-width: 2px;
+    border-style: solid;
+    border-color: var(--white);
+
+    margin: 0.25em;
+
+    /* display: flex; */
+    position: relative;
+    justify-content: center;
+    align-items: center;
+
+    &:hover {
+        border-color: var(--bright-white);
+
+        & > .file-content {
+            display: block !important;
+        }
+    }
+}
+
+.file-name {
+    position: absolute;
+    inset: 0;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    text-align: center;
+    word-break: normal;
+    overflow-wrap: anywhere;
+}
+
+.file-content {
+    background-color: var(--background);
+
+    border-width: 2px;
+    border-style: solid;
+    border-color: var(--white);
+
+    z-index: 10;
+
+    display: none;
+    position: absolute;
+    left: 0.25em;
+    top: 0.25em;
+    max-width: 120%;
+    max-height: 120%;
+
+    overflow: hidden;
+}
