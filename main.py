@@ -13,21 +13,10 @@ def index() -> str:
     return render_template("index.html", quote=quote)
 
 
-@app.get("/books/<book>")
-def book(book: str) -> str:
-    for name in os.listdir("books"):
-        if name == book:
-            break
-    else:
-        return abort(404)
-
-    quote = subprocess.run(["fortune", "-l"], capture_output=True, text=True).stdout
-
-    text = ""
-    with open(f"books/{book}") as f:
-        text = f.read()
-
-    return render_template("book.html", quote=quote, text=text)
+@app.get("/public/", defaults={"path": ""})
+@app.get("/public/<path:path>")
+def public(path: str = "") -> str:
+    abort(501, "This page is under construction. 🚨🚨🚨🚨🚨")
 
 
 if __name__ == "__main__":
