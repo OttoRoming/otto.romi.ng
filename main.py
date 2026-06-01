@@ -71,14 +71,16 @@ def index() -> str:
     return render_template("index.html", **context)
 
 
-@app.get("/login")
-def login() -> str:
+@app.get("/login/", defaults={"path": ""})
+@app.get("/login/<path:path>")
+def login(path: str) -> str:
     context = generate_context()
     return render_template("login.html", **context)
 
 
-@app.post("/login")
-def login_post() -> Response:
+@app.post("/login/", defaults={"path": ""})
+@app.post("/login/<path:path>")
+def login_post(path: str) -> Response:
     password = request.form.get("password")
 
     print(password, PASSWORD)
@@ -87,7 +89,7 @@ def login_post() -> Response:
 
     session = store.new_session()
 
-    response = make_response(redirect(url_for("public")))
+    response = make_response(redirect(url_for("public", path=path)))
     response.set_cookie("session", str(session))
     return response
 
@@ -97,7 +99,7 @@ def login_post() -> Response:
 def public(path: str = "") -> Response | str:
     session = request.cookies.get("session")
     if session is None or not store.is_session_valid(UUID(session)):
-        return make_response(redirect(url_for("login")))
+        return make_response(redirect(url_for("login", path=path)))
 
     # https://en.wikipedia.org/wiki/Directory_traversal_attack
     if ".." in path:
