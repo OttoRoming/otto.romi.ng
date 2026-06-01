@@ -126,6 +126,7 @@ def public(path: str = "") -> Response | str:
 
             entries.append({"type": type, "name": entry.name})
 
+        entries.sort(key=lambda e: e["name"])
         context = generate_context({"path": path, "entries": entries})
         return render_template("public.html", **context)
     elif os.path.isfile(realpath):
