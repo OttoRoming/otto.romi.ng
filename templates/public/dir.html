@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block style %}
+    {{ super() }}
+    {% include("public/dir.css") %}
+{% endblock %}
+{% block content %}
+    <strong>Path: /{{ display_path }}</strong>
+    <div class="entries">
+        <!-- Display  -->
+        {%
+            set entry = {
+                "name": "..",
+                "type": "dir"
+            }
+        %}
+        {% include("components/direntry.html") %}
+        <!-- List directory contents -->
+        {% for entry in entries %}
+            {% include("components/direntry.html") %}
+        {% endfor %}
+    </div>
+{% endblock %}
