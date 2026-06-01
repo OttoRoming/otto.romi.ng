@@ -170,13 +170,17 @@ main {
 }
 
 footer {
-    display: flex;
+    /*display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: center;
-}
+    align-items: center;*/
 
-._88x31 img {
-    width: 88px;
-    height: 31px;
+    & > a {
+        text-decoration: none;
+
+        & > img {
+            width: 88px;
+            height: 31px;
+        }
+    }
 }
