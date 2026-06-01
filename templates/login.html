@@ -1,7 +1,14 @@
-{% extends "base.html" %} {% block content %}
-<form method="post">
-    <label for="password">password: </label>
-    <input type="password" id="password" name="password" />
-    <button type="submit">Login</button>
-</form>
+{% extends "base.html" %}
+{% block content %}
+    <h2>Log in</h2>
+    {% if not logged_in %}
+        <form method="post">
+            <label for="password">password: </label>
+            <input type="password" id="password" name="password" />
+            <button type="submit">Login</button>
+        </form>
+    {% else %}
+        <h3>You are already logged in</h3>
+        <a href="/signout">sign out</a>
+    {% endif %}
 {% endblock %}

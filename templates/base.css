@@ -142,11 +142,23 @@ body {
 }
 
 main {
+    position: relative;
+
     width: min(1000px, 90vw);
 
     border-width: 2px;
     border-style: solid;
     border-color: var(--white);
+
+    & > .account {
+        position: absolute;
+        top: 0.5em;
+        right: 0.5em;
+
+        & > .header {
+            font-weight: bold;
+        }
+    }
 
     & h1 {
         color: var(--red);
@@ -157,7 +169,11 @@ main {
     & h2 {
         color: var(--green);
         font-size: 2em;
-        padding-left: 0.8em;
+    }
+
+    & h3 {
+        color: var(--yellow);
+        font-size: 1.8em;
     }
 
     & p {

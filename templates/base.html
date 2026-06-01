@@ -6,7 +6,8 @@
         <!-- <link rel="stylesheet" href="/style.css" /> -->
         <style>
             {% block style %}
-            {% include "style.css" %}
+            {% include "base.css" %}
+            {% include "components/style.css" %}
             {% endblock %}
         </style>
         <title>otto.romi.ng</title>
@@ -14,6 +15,14 @@
 
     <body>
         <main>
+            {% if logged_in %}
+            <div class="account">
+                <div class="header">Logged in</div>
+                <div>Access level: {{ access_level }}</div>
+                <a href="/signout">Sign out</a>
+            </div>
+            {% endif %}
+
             <h1>otto.romi.ng</h1>
             <label class="c left">
                 <input type="checkbox" />
@@ -21,7 +30,6 @@
             <label class="c right">
                 <input type="checkbox" />
             </label>
-            <blockquote>{{ fortune }}</blockquote>
 
             {% block content %} {% endblock %}
 
@@ -143,7 +151,6 @@
                 <a href="http://www.youth.rep.kp/">
                     <img src="/static/88x31/dprk/youth.jpg" alt="dprk youth" />
                 </a>
-
                 <a href="https://webring.lysator.liu.se/link/otro/prev"
                     >previous</a
                 >

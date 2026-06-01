@@ -1,0 +1,35 @@
+<a
+    class="direntry"
+    title="{{ entry.name }}"
+    href="{{ url_for('public', path=display_path + '/' + entry.name) }}"
+>
+    <div class="icon">
+        <span>
+            {% if entry.type == "dir" %}
+                <pre>
+ _
+| \___
+|     |
+|_____|</pre
+                >
+            {% elif entry.type == "file" %}
+                <pre>
+ ____
+|    \
+|     |
+|     |
+|_____|</pre
+                >
+            {% elif entry.type == "symlink" %}
+                <pre>
+
+ ____|\
+|      \
+|____  /
+     |/</pre
+                >
+            {% endif %}
+        </span>
+    </div>
+    <span class="name">{{ entry.name }}</span>
+</a>

@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+    <h2>Whoopsie {{ code }} - {{ name }}</h2>
+    {% if code == 451 %}
+        A higher access level is requiered to access this content
+    {% endif %}
+{% endblock %}

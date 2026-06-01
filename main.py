@@ -1,6 +1,7 @@
 import os
 import pickle
 import subprocess
+from pathlib import Path
 from typing import Any
 from uuid import UUID
 
@@ -16,6 +17,7 @@ from flask import (
     send_file,
     url_for,
 )
+from werkzeug.exceptions import HTTPException
 
 STORE_FILENAME = "store.pickle"
 
@@ -28,21 +30,38 @@ def uuid4():
 
 class SessionStore:
     def __init__(self) -> None:
-        self.sessions: set[UUID] = set()
+        self.sessions: dict[UUID, int] = {}
 
     def dump(self) -> None:
         with open(STORE_FILENAME, "wb") as f:
             pickle.dump(self, f)
 
-    def new_session(self) -> UUID:
+    def new_session(self, level: int) -> UUID:
         session = uuid4()
-        self.sessions.add(session)
+        self.sessions[session] = level
 
         self.dump()
         return session
 
-    def is_session_valid(self, session: UUID) -> bool:
-        return session in self.sessions
+    def remove_session(self, session: UUID | None = None) -> None:
+        if session is None:
+            session_str = request.cookies.get("session")
+            if session_str is None:
+                return None
+
+            session = UUID(session_str)
+
+        del self.sessions[session]
+
+    def get_access_level(self, session: UUID | None = None) -> int | None:
+        if session is None:
+            session_str = request.cookies.get("session")
+            if session_str is None:
+                return None
+
+            session = UUID(session_str)
+
+        return self.sessions.get(session)
 
 
 app = Flask(__name__)
@@ -55,13 +74,29 @@ except FileNotFoundError:
     store = SessionStore()
 
 load_dotenv()
-PASSWORD = os.getenv("PASSWORD")
+
+password_access_levels: dict[str | None, int] = {
+    os.getenv("PASSWORD1"): 1,
+    os.getenv("PASSWORD2"): 2,
+}
 
 
 def generate_context(other: dict[str, Any] = {}) -> dict[str, Any]:
-    fortune = subprocess.run(["fortune"], capture_output=True, text=True).stdout
+    access_level = store.get_access_level()
+    logged_in = access_level is not None
 
-    return {"fortune": fortune, **other}
+    return {
+        "logged_in": logged_in,
+        "access_level": access_level,
+        **other,
+    }
+
+
+@app.errorhandler(HTTPException)
+def error(error: HTTPException) -> str:
+
+    context = generate_context({"code": error.code, "name": error.name})
+    return render_template("error.html", **context)
 
 
 @app.get("/")
@@ -82,24 +117,40 @@ def login(path: str) -> str:
 @app.post("/login/<path:path>")
 def login_post(path: str) -> Response:
     password = request.form.get("password")
+    if password is None:
+        abort(400)
 
-    print(password, PASSWORD)
-    if password != PASSWORD:
+    access_level = password_access_levels.get(password)
+    if access_level is None:
         abort(401)
 
-    session = store.new_session()
+    session = store.new_session(access_level)
 
     response = make_response(redirect(url_for("public", path=path)))
     response.set_cookie("session", str(session))
     return response
 
 
+@app.get("/signout")
+def signout() -> Response:
+    response = make_response(redirect(url_for("index")))
+    response.delete_cookie("session")
+
+    return response
+
+
 @app.get("/public/", defaults={"path": ""})
 @app.get("/public/<path:path>")
 def public(path: str = "") -> Response | str:
+    login_response = make_response(redirect(url_for("login", path=path)))
+
     session = request.cookies.get("session")
-    if session is None or not store.is_session_valid(UUID(session)):
-        return make_response(redirect(url_for("login", path=path)))
+    if session is None:
+        return login_response
+
+    access_level = store.get_access_level(UUID(session))
+    if access_level is None:
+        return login_response
 
     # https://en.wikipedia.org/wiki/Directory_traversal_attack
     if ".." in path:
@@ -107,14 +158,20 @@ def public(path: str = "") -> Response | str:
 
     entries = []
     home = os.getenv("HOME")
-    realpath = f"{home}/shared/public/{path}"
+    # realpath = f"{home}/shared/public/{path}"
+
+    p = Path(f"{home}/shared/public")
+    realpath = p / path
+    display_path = Path(path)
+    parent_path = display_path.parent
 
     if os.path.isdir(realpath):
         for entry in os.scandir(realpath):
-            if entry.name == ".busig":
-                response = make_response()
-                response.status_code = 402
-                return response
+            if entry.name == ".confidential" and access_level < 2:
+                abort(451)
+                # response = make_response()
+                # response.status_code = 402
+                # return response
 
             type = ""
             if entry.is_symlink():
@@ -127,8 +184,14 @@ def public(path: str = "") -> Response | str:
             entries.append({"type": type, "name": entry.name})
 
         entries.sort(key=lambda e: e["name"])
-        context = generate_context({"path": path, "entries": entries})
-        return render_template("public.html", **context)
+        context = generate_context(
+            {
+                "display_path": str(display_path),
+                "parent_path": str(parent_path),
+                "entries": entries,
+            }
+        )
+        return render_template("public/dir.html", **context)
     elif os.path.isfile(realpath):
         return send_file(realpath)
     else:
