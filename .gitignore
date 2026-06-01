@@ -1,2 +1,4 @@
 public/
 env/
+.env
+store.pickle

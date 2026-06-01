@@ -26,6 +26,7 @@
 *::before,
 *::after {
     box-sizing: border-box;
+    image-rendering: pixelated;
     cursor: alias;
 }
 
