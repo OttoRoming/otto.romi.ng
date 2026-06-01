@@ -2,6 +2,20 @@
 "public.css" %} {% endblock %} {% block content %}
 <strong>Path: /{{path}}</strong>
 <div class="entries">
+    <a class="entry" title=".." href=".">
+        <div class="icon">
+            <span>
+                <pre>
+ _
+| \___
+|     |
+|_____|</pre
+                >
+            </span>
+        </div>
+        <span class="name">..</span>
+    </a>
+
     {% for entry in entries %}
     <a
         class="entry"
@@ -9,7 +23,7 @@
         href="{{ url_for('public', path=path + '/' + entry.name) }}"
     >
         <div class="icon">
-            <span class="icon">
+            <span>
                 {% if entry.type == "dir" %}
                 <pre>
  _

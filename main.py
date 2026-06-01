@@ -103,7 +103,7 @@ def public(path: str = "") -> Response | str:
     if ".." in path:
         abort(400)
 
-    entries = [{"type": "dir", "name": ".."}]
+    entries = []
     home = os.getenv("HOME")
     realpath = f"{home}/shared/public/{path}"
 
