@@ -4,13 +4,15 @@
     {% include("public/dir.css") %}
 {% endblock %}
 {% block content %}
+    <h2>File Browser</h2>
     <strong>Path: /{{ display_path }}</strong>
     <div class="entries">
         <!-- Display  -->
         {%
             set entry = {
                 "name": "..",
-                "type": "dir"
+                "type": "dir",
+                "preview_availible": False
             }
         %}
         {% include("components/direntry.html") %}

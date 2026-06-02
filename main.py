@@ -2,7 +2,7 @@ import os
 import pickle
 import subprocess
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from dotenv import load_dotenv
@@ -20,6 +20,33 @@ from flask import (
 from werkzeug.exceptions import HTTPException
 
 STORE_FILENAME = "store.pickle"
+
+PREVIEW_EXT: dict[str, Literal["image"] | Literal["video"] | Literal["document"]] = {
+    # Image formats
+    ".jpg": "image",
+    ".jpeg": "image",
+    ".jpe": "image",
+    ".jif": "image",
+    ".jfif": "image",
+    ".png": "image",
+    ".gif": "image",
+    ".svg": "image",
+    ".svgz": "image",
+    ".webp": "image",
+    ".avif": "image",
+    ".avifs": "image",
+    ".apng": "image",
+    ".ico": "image",
+    ".cur": "image",
+    ".bmp": "image",
+    ".dib": "image",
+    # Video formats
+    ".mp4": "video",
+    ".m4v": "video",
+    ".webm": "video",
+    # Document formats
+    ".pdf": "document",
+}
 
 
 # https://stackoverflow.com/questions/41505448/is-python-uuid-uuid4-strong-enough-for-password-reset-links
@@ -139,16 +166,37 @@ def signout() -> Response:
     return response
 
 
+@app.get("/preview/<path:path>")
+def preview(path: str) -> Response | str:
+    return make_response(redirect(url_for("public", path=path)))
+
+    # login_response = make_response(redirect(url_for("login", path=path)))
+
+    # access_level = store.get_access_level()
+    # if access_level is None:
+    #     return login_response
+
+    # # https://en.wikipedia.org/wiki/Directory_traversal_attack
+    # if ".." in path:
+    #     abort(400)
+
+    # type = PREVIEW_EXT.get(os.path.splitext(path)[1])
+    # if type is None:
+
+    # filename = Path(path).name
+
+    # return render_template(
+    #     "preview.html",
+    #     **generate_context({"type": type, "path": path, "filename": filename}),
+    # )
+
+
 @app.get("/public/", defaults={"path": ""})
 @app.get("/public/<path:path>")
 def public(path: str = "") -> Response | str:
     login_response = make_response(redirect(url_for("login", path=path)))
 
-    session = request.cookies.get("session")
-    if session is None:
-        return login_response
-
-    access_level = store.get_access_level(UUID(session))
+    access_level = store.get_access_level()
     if access_level is None:
         return login_response
 
@@ -169,9 +217,9 @@ def public(path: str = "") -> Response | str:
         for entry in os.scandir(realpath):
             if entry.name == ".confidential" and access_level < 2:
                 abort(451)
-                # response = make_response()
-                # response.status_code = 402
-                # return response
+
+            extension = os.path.splitext(entry.path)[1]
+            preview_availible = extension.lower() in PREVIEW_EXT
 
             type = ""
             if entry.is_symlink():
@@ -181,7 +229,13 @@ def public(path: str = "") -> Response | str:
             elif entry.is_dir():
                 type = "dir"
 
-            entries.append({"type": type, "name": entry.name})
+            entries.append(
+                {
+                    "name": entry.name,
+                    "type": type,
+                    "preview_availible": preview_availible,
+                }
+            )
 
         entries.sort(key=lambda e: e["name"])
         context = generate_context(
@@ -199,4 +253,4 @@ def public(path: str = "") -> Response | str:
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=61000)
+    app.run(debug=True, host="0.0.0.0", port=61001)

@@ -1,0 +1,7 @@
+.preview > :is(video, img, iframe) {
+    width: 45%;
+}
+
+.preview iframe {
+    height: 30em;
+}

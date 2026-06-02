@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block style %}
+    {{ super() }}
+    {% include("preview.css") %}
+{% endblock %}
+
+{% block content %}
+    <h2>File Preview</h2>
+    <div class="preview">
+        {% set src = url_for('public', path = path) %}
+
+        {% if type == "image" %}
+            <img src="{{ src }}" alt="{{ filename }}" />
+        {% elif type == "video" %}
+            <video autoplay controls src="{{ src }}" alt="{{ filename }}" />
+        {% elif type == "document" %}
+            <iframe src="{{ src }}" frameborder="0"></iframe>
+        {% endif %}
+    </div>
+{% endblock %}
