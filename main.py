@@ -6,9 +6,8 @@ from typing import Any, Literal
 from uuid import UUID
 
 from dotenv import load_dotenv
-from flask import (
-    Flask,
-    Response,
+from quart import (
+    Quart,
     abort,
     make_response,
     redirect,
@@ -16,12 +15,18 @@ from flask import (
     request,
     send_file,
     url_for,
+    Response as QuartResponse
 )
 from werkzeug.exceptions import HTTPException
+from werkzeug import Response as WerkResponse
+
+type Response = QuartResponse | WerkResponse
+
+
 
 STORE_FILENAME = "store.pickle"
 
-PREVIEW_EXT: dict[str, Literal["image"] | Literal["video"] | Literal["document"]] = {
+PREVIEW_EXT: dict[str, Literal["image", "video", "document"]] = {
     # Image formats
     ".jpg": "image",
     ".jpeg": "image",
@@ -53,7 +58,6 @@ PREVIEW_EXT: dict[str, Literal["image"] | Literal["video"] | Literal["document"]
 def uuid4():
     """Generate a cryptographically secure random UUID."""
     return UUID(bytes=os.urandom(16), version=4)
-
 
 class SessionStore:
     def __init__(self) -> None:
@@ -91,7 +95,7 @@ class SessionStore:
         return self.sessions.get(session)
 
 
-app = Flask(__name__)
+app = Quart(__name__)
 store: SessionStore
 
 try:
@@ -120,30 +124,31 @@ def generate_context(other: dict[str, Any] = {}) -> dict[str, Any]:
 
 
 @app.errorhandler(HTTPException)
-def error(error: HTTPException) -> str:
+async def error(error: HTTPException) -> str:
 
     context = generate_context({"code": error.code, "name": error.name})
-    return render_template("error.html", **context)
+    return await render_template("error.html", **context)
 
 
 @app.get("/")
-def index() -> str:
+async def index() -> str:
     context = generate_context()
 
-    return render_template("index.html", **context)
+    return await render_template("index.html", **context)
 
 
 @app.get("/login/", defaults={"path": ""})
 @app.get("/login/<path:path>")
-def login(path: str) -> str:
+async def login(path: str) -> str:
     context = generate_context()
-    return render_template("login.html", **context)
+    return await render_template("login.html", **context)
 
 
 @app.post("/login/", defaults={"path": ""})
 @app.post("/login/<path:path>")
-def login_post(path: str) -> Response:
-    password = request.form.get("password")
+async def login_post(path: str) -> Response:
+    form = await request.form
+    password = form.get("password")
     if password is None:
         abort(400)
 
@@ -153,22 +158,22 @@ def login_post(path: str) -> Response:
 
     session = store.new_session(access_level)
 
-    response = make_response(redirect(url_for("public", path=path)))
+    response = await make_response(redirect(url_for("public", path=path)))
     response.set_cookie("session", str(session))
     return response
 
 
 @app.get("/signout")
-def signout() -> Response:
-    response = make_response(redirect(url_for("index")))
+async def signout() -> Response:
+    response = await make_response(redirect(url_for("index")))
     response.delete_cookie("session")
 
     return response
 
 
 @app.get("/preview/<path:path>")
-def preview(path: str) -> Response | str:
-    return make_response(redirect(url_for("public", path=path)))
+async def preview(path: str) -> Response | str:
+    return await make_response(redirect(url_for("public", path=path)))
 
     # login_response = make_response(redirect(url_for("login", path=path)))
 
@@ -193,8 +198,8 @@ def preview(path: str) -> Response | str:
 
 @app.get("/public/", defaults={"path": ""})
 @app.get("/public/<path:path>")
-def public(path: str = "") -> Response | str:
-    login_response = make_response(redirect(url_for("login", path=path)))
+async def public(path: str = "") -> Response | str:
+    login_response = await make_response(redirect(url_for("login", path=path)))
 
     access_level = store.get_access_level()
     if access_level is None:
@@ -245,9 +250,9 @@ def public(path: str = "") -> Response | str:
                 "entries": entries,
             }
         )
-        return render_template("public/dir.html", **context)
+        return await render_template("public/dir.html", **context)
     elif os.path.isfile(realpath):
-        return send_file(realpath)
+        return await send_file(realpath)
     else:
         abort(404)
 
