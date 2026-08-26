@@ -5,20 +5,22 @@
 {% endblock %}
 {% block content %}
     <h2>File Browser</h2>
-    <strong>Path: /{{ display_path }}</strong>
-    <div class="entries">
-        <!-- Display  -->
-        {%
-            set entry = {
-                "name": "..",
-                "type": "dir",
-                "preview_availible": False
-            }
-        %}
-        {% include("components/direntry.html") %}
-        <!-- List directory contents -->
-        {% for entry in entries %}
+    <div class="dir">
+        <strong>Path: /{{ display_path }}</strong>
+        <div class="entries">
+            <!-- .. directory  -->
+            {%
+                set entry = {
+                    "name": "..",
+                    "type": "dir",
+                    "preview_availible": False
+                }
+            %}
             {% include("components/direntry.html") %}
-        {% endfor %}
+            <!-- List directory contents -->
+            {% for entry in entries %}
+                {% include("components/direntry.html") %}
+            {% endfor %}
+        </div>
     </div>
 {% endblock %}

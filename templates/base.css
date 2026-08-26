@@ -22,12 +22,20 @@
     --bright-white: #9cacad;
 }
 
+@font-face {
+    font-family: "DotGothic";
+    src: url("/static/fonts/DotGothic16-Regular.ttf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+}
+
 *,
 *::before,
 *::after {
     box-sizing: border-box;
     image-rendering: pixelated;
-    cursor: alias;
+    font-family: "DotGothic", sans-serif;
+    text-decoration-thickness: 2px;
 }
 
 body {
@@ -43,35 +51,14 @@ body {
     display: flex;
     justify-content: center;
 
-    font-family: monospace;
     font-size: 150%;
-}
 
-.background {
-    position: absolute;
-    /* left: 0;
-  top: 0; */
-    inset: 0;
+    min-height: 100vh;
 
-    /* height: 100%; */
-    overflow: hidden;
-
-    opacity: 15%;
-
-    z-index: -10;
-    user-select: none;
-
-    & > .tile {
-        display: inline-block;
-
-        height: 2em;
-        width: 2em;
-
-        border-width: 2px;
-        border-style: solid;
-        border-color: var(--white);
-        background-color: var(--background);
-    }
+    background-image: url("/static/images/background.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
 .left {
@@ -89,6 +76,12 @@ body {
 .c {
     width: 30%;
     aspect-ratio: 1 / 1;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+    font-size: 2.5em;
 
     background-color: var(--yellow);
 
@@ -124,10 +117,84 @@ body {
         animation-play-state: paused;
         background-color: var(--red);
     }
+
+    & > input {
+        display: none;
+    }
+}
+
+.star {
+    & > .shard {
+        position: absolute;
+
+        width: 20em;
+        aspect-ratio: 1 / 1;
+
+        background-color: var(--yellow);
+        cursor: alias;
+
+        --duration: 10s;
+
+        --p1: calc((2 / 10 + (var(--i) / 100)) * 2 * pi);
+        --p2: calc((3 / 10 + (var(--i) / 100)) * 2 * pi);
+        --p3: calc((4 / 10 + (var(--i) / 100)) * 2 * pi);
+        --shape: polygon(
+            calc(50% + 30% * cos(var(--p1))) calc(50% + 30% * sin(var(--p1))),
+            calc(50% + 50% * cos(var(--p2))) calc(50% + 50% * sin(var(--p2))),
+            calc(50% + 30% * cos(var(--p3))) calc(50% + 30% * sin(var(--p3))),
+            50% 50%
+        );
+
+        shape-outside: var(--shape);
+        clip-path: var(--shape);
+
+        animation: iter 10s linear infinite;
+
+        &:nth-child(1) {
+            animation-delay: -8s;
+        }
+
+        &:nth-child(2) {
+            animation-delay: -6s;
+        }
+
+        &:nth-child(3) {
+            animation-delay: -4s;
+        }
+
+        &:nth-child(4) {
+            animation-delay: -2s;
+        }
+
+        &:nth-child(5) {
+            position: relative;
+        }
+
+        &:hover {
+            opacity: 0.5;
+            transition: opacity 0.2s linear;
+        }
+    }
+
+    & > strong {
+        position: absolute;
+        inset: 0;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        font-size: 2.5em;
+        pointer-events: none;
+    }
+
+    & > input {
+        display: none;
+    }
 }
 
 @property --i {
-    syntax: "<integer>";
+    syntax: "<number>";
     initial-value: 0;
     inherits: false;
 }
@@ -141,10 +208,45 @@ body {
     }
 }
 
-main {
+h1 {
+    color: var(--yellow);
+    font-size: 3em;
+    font-size: 3rem;
+
+    & > a {
+        text-decoration-thickness: 4px;
+        color: inherit;
+    }
+}
+
+body:has(.left input:checked) h1 > label.otto {
+    color: var(--red);
+}
+
+body:has(.right input:checked) h1 > label.ng {
+    color: var(--red);
+}
+
+.enter {
+    position: absolute;
+    inset: 0;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    &:has(#enter-checkbox:checked) {
+        display: none;
+    }
+}
+
+.base {
     position: relative;
 
     width: min(1000px, 90vw);
+    background-color: color-mix(in srgb, var(--background) 70%, transparent);
+    height: fit-content;
+    padding: 1em;
 
     border-width: 2px;
     border-style: solid;
@@ -160,12 +262,6 @@ main {
         }
     }
 
-    & h1 {
-        color: var(--red);
-        font-size: 3em;
-        padding-left: 1em;
-    }
-
     & h2 {
         color: var(--green);
         font-size: 2em;
@@ -173,7 +269,7 @@ main {
     }
 
     & h3 {
-        color: var(--yellow);
+        color: var(--blue);
         font-size: 1.8em;
         margin: 0;
     }
@@ -188,11 +284,6 @@ main {
 }
 
 footer {
-    /*display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;*/
-
     & > a {
         text-decoration: none;
 

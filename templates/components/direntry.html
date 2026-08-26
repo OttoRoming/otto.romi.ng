@@ -14,25 +14,22 @@
  _
 | \___
 |     |
-|_____|</pre
-                >
+|_____|</pre>
             {% elif entry.type == "file" %}
                 <pre>
  ____
 |    \
 |     |
-|_____|</pre
-                >
+|_____|</pre>
             {% elif entry.type == "symlink" %}
                 <pre>
 
  ____|\
 |      \
 |____  /
-     |/</pre
-                >
+     |/</pre>
             {% endif %}
         </span>
     </div>
-    <span class="name">{{ entry.name }}</span>
+    <div class="name">{{ entry.name }}</div>
 </a>
