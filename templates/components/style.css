@@ -21,7 +21,8 @@
     &:hover {
         outline-width: 2px;
         outline-style: solid;
-        outline-color: color-mix(in srgb, var(--background) 50%, transparent);
+        outline-color: var(--white);
+        /*outline-color: color-mix(in srgb, var(--background) 50%, transparent);*/
 
         & > .name {
             text-decoration: underline;
@@ -29,6 +30,7 @@
     }
 
     & > .name {
+        text-align: center;
         word-break: normal;
         overflow-wrap: anywhere;
         hyphens: auto;
