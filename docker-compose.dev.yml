@@ -1,0 +1,10 @@
+services:
+  main:
+    restart: "no"
+    environment:
+      QUART_DEBUG: "1"
+    volumes:
+      - .:/app
+      - appvenv:/app/.venv
+volumes:
+  appvenv:

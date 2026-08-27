@@ -6,6 +6,7 @@ from typing import Any, Literal
 from uuid import UUID
 import pwd
 from datetime import datetime
+import asyncio
 
 from quart import (
     Quart,
@@ -20,6 +21,7 @@ from quart import (
 )
 from werkzeug.exceptions import HTTPException
 from werkzeug import Response as WerkResponse
+import db
 
 type Response = QuartResponse | WerkResponse
 
@@ -60,63 +62,58 @@ def uuid4():
     """Generate a cryptographically secure random UUID."""
     return UUID(bytes=os.urandom(16), version=4)
 
-class SessionStore:
-    def __init__(self) -> None:
-        self.sessions: dict[UUID, int] = {}
-
-    def dump(self) -> None:
-        with open(STORE_FILENAME, "wb") as f:
-            pickle.dump(self, f)
-
-    def new_session(self, level: int) -> UUID:
-        session = uuid4()
-        self.sessions[session] = level
-
-        self.dump()
-        return session
-
-    def remove_session(self, session: UUID | None = None) -> None:
-        if session is None:
-            session_str = request.cookies.get("session")
-            if session_str is None:
-                return None
-
-            session = UUID(session_str)
-
-        del self.sessions[session]
-
-    def get_access_level(self, session: UUID | None = None) -> int | None:
-        if session is None:
-            session_str = request.cookies.get("session")
-            if session_str is None:
-                return None
-
-            session = UUID(session_str)
-
-        return self.sessions.get(session)
+# class SessionStore:
+#     def __init__(self) -> None:
+#         self.sessions: dict[UUID, int] = {}
+#
+#     def dump(self) -> None:
+#         with open(STORE_FILENAME, "wb") as f:
+#             pickle.dump(self, f)
+#
+#     def new_session(self, level: int) -> UUID:
+#         session = uuid4()
+#         self.sessions[session] = level
+#
+#         self.dump()
+#         return session
+#
+#     def remove_session(self, session: UUID | None = None) -> None:
+#         if session is None:
+#             session_str = request.cookies.get("session")
+#             if session_str is None:
+#                 return None
+#
+#             session = UUID(session_str)
+#
+#         del self.sessions[session]
+#
+#     def get_access_level(self, session: UUID | None = None) -> int | None:
+#         if session is None:
+#             session_str = request.cookies.get("session")
+#             if session_str is None:
+#                 return None
+#
+#             session = UUID(session_str)
+#
+#         return self.sessions.get(session)
 
 
 app = Quart(__name__)
-store: SessionStore
 
-try:
-    with open(STORE_FILENAME, "rb") as f:
-        store = pickle.load(f)
-except FileNotFoundError:
-    store = SessionStore()
+# try:
+#     with open(STORE_FILENAME, "rb") as f:
+#         store = pickle.load(f)
+# except FileNotFoundError:
+#     store = SessionStore()
 
-password_access_levels: dict[str | None, int] = {
-    os.getenv("PASSWORD1"): 1,
-    os.getenv("PASSWORD2"): 2,
-}
+async def generate_context(other: dict[str, Any] = {}) -> dict[str, Any]:
+    token = request.cookies.get("token")
+    access_level: int | None = None
 
-
-def generate_context(other: dict[str, Any] = {}) -> dict[str, Any]:
-    access_level = store.get_access_level()
-    logged_in = access_level is not None
+    if token is not None:
+        access_level = await db.get_session_access_level(UUID(token))
 
     return {
-        "logged_in": logged_in,
         "access_level": access_level,
         **other,
     }
@@ -125,21 +122,20 @@ def generate_context(other: dict[str, Any] = {}) -> dict[str, Any]:
 @app.errorhandler(HTTPException)
 async def error(error: HTTPException) -> str:
 
-    context = generate_context({"code": error.code, "name": error.name})
+    context = await generate_context({"code": error.code, "name": error.name})
     return await render_template("error.html", **context)
 
 
 @app.get("/")
 async def index() -> str:
-    context = generate_context()
-
+    context = await generate_context()
     return await render_template("index.html", **context)
 
 
 @app.get("/login/", defaults={"path": ""})
 @app.get("/login/<path:path>")
 async def login(path: str) -> str:
-    context = generate_context()
+    context = await generate_context()
     return await render_template("login.html", **context)
 
 
@@ -151,14 +147,16 @@ async def login_post(path: str) -> Response:
     if password is None:
         abort(400)
 
-    access_level = password_access_levels.get(password)
-    if access_level is None:
-        abort(401)
+    user_agent = request.headers.get("User-Agent")
 
-    session = store.new_session(access_level)
+    client_ip = request.remote_addr
+    if client_ip is None:
+        abort(400)
 
     response = await make_response(redirect(url_for("public", path=path)))
-    response.set_cookie("session", str(session))
+    token = await db.login(password, user_agent, client_ip)
+    
+    response.set_cookie("token", str(token))
     return response
 
 
@@ -254,7 +252,7 @@ async def public(path: str = "") -> Response | str:
                 }
             )
 
-        context = generate_context(
+        context = await generate_context(
             {
                 "display_path": str(display_path),
                 "parent_path": str(parent_path),
@@ -270,5 +268,9 @@ async def public(path: str = "") -> Response | str:
         abort(404)
 
 
+@app.before_serving
+async def init():
+    await db.init()
+
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=61001)
+    app.run(host="0.0.0.0", port=80)

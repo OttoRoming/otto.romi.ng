@@ -1,8 +1,33 @@
 services:
+  db:
+    image: docker.io/library/postgres:18-alpine
+    container_name: db
+    environment:
+      POSTGRES_DB: roming
+      POSTGRES_USER: otto
+      POSTGRES_PASSWORD: shushing_face
+    volumes:
+      - ./data/db:/var/lib/postgresql:Z
+
+  dbmate:
+    image: ghcr.io/amacneil/dbmate:2.35
+    container_name: dbmate
+    working_dir: /
+    environment:
+      DATABASE_URL: "postgres://otto:sushing_face@db:5432/roming?sslmode=disable"
+    depends_on:
+      - db
+    volumes:
+      - ./db:/db
+    command: --wait migrate
+    # command: --migrations-dir /db/migrations --wait migrate
+
   main:
     build: .
     ports: 61001:80
     restart: unless-stopped
+    depends_on:
+      - db
+      - dbmate
     env_file:
       - .env
-
