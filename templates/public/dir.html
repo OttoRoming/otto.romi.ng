@@ -6,7 +6,19 @@
 {% block content %}
     <h2>File Browser</h2>
     <div class="dir">
-        <strong>Path: /{{ display_path }}</strong>
+        <div class="bar">
+            <div class="path">Path: /{{ display_path }}</div>
+            <div class="mode">
+                <a
+                    href="?mode=icons"
+                    {% if mode == "icons" %} class="active" {% endif %}
+                >icons</a>
+                <a 
+                    href="?mode=details"
+                    {% if mode == "details" %} class="active" {% endif %}
+                >details</a>
+            </div>
+        </div>
         <div class="entries">
             <!-- .. directory  -->
             {%

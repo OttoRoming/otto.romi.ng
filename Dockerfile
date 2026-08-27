@@ -26,11 +26,6 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 # Then, use a final image without uv
 FROM python:3.14-slim-trixie
-# It is important to use the image that matches the builder, as the path to the
-# Python executable must be the same, e.g., using `python:3.11-slim-trixie`
-# will fail.
-RUN apt update -y
-RUN apt install -y ca-certificates git
 
 # Copy the application from the builder
 COPY --from=builder /app /app
@@ -45,4 +40,4 @@ ENV PYTHONUNBUFFERED=1
 # Use `/app` as the working directory
 WORKDIR /app
 
-CMD ["uv", "run", "main.py"]
+CMD ["python3", "main.py"]

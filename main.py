@@ -4,8 +4,9 @@ import subprocess
 from pathlib import Path
 from typing import Any, Literal
 from uuid import UUID
+import pwd
+from datetime import datetime
 
-from dotenv import load_dotenv
 from quart import (
     Quart,
     abort,
@@ -103,8 +104,6 @@ try:
         store = pickle.load(f)
 except FileNotFoundError:
     store = SessionStore()
-
-load_dotenv()
 
 password_access_levels: dict[str | None, int] = {
     os.getenv("PASSWORD1"): 1,
@@ -209,14 +208,18 @@ async def public(path: str = "") -> Response | str:
     if ".." in path:
         abort(400)
 
+    mode = request.args.get("mode")
+    if mode is None:
+        mode = "icons"
+
     entries = []
     home = os.getenv("HOME")
-    # realpath = f"{home}/shared/public/{path}"
 
     p = Path(f"{home}/shared/public")
     realpath = p / path
     display_path = Path(path)
     parent_path = display_path.parent
+    print(realpath)
 
     if os.path.isdir(realpath):
         for entry in os.scandir(realpath):
@@ -234,24 +237,34 @@ async def public(path: str = "") -> Response | str:
             elif entry.is_dir():
                 type = "dir"
 
+            stat = entry.stat()
+            owner_info = pwd.getpwuid(stat.st_uid)
+            dt = datetime.fromtimestamp(stat.st_mtime)
+
             entries.append(
                 {
                     "name": entry.name,
+                    "mode": oct(stat.st_mode),
+                    "owner": owner_info.pw_name,
                     "type": type,
-                    "preview_availible": preview_availible,
+                    "modified_day": dt.strftime("%d"),
+                    "modified_month": dt.strftime("%b"),
+                    "modified_year": dt.strftime("%Y"),
+                    "preview_available": preview_availible,
                 }
             )
 
-        entries.sort(key=lambda e: e["name"])
         context = generate_context(
             {
                 "display_path": str(display_path),
                 "parent_path": str(parent_path),
                 "entries": entries,
+                "mode": mode
             }
         )
         return await render_template("public/dir.html", **context)
     elif os.path.isfile(realpath):
+
         return await send_file(realpath)
     else:
         abort(404)

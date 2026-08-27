@@ -1,5 +1,35 @@
 .dir {
     background-color: color-mix(in srgb, var(--background) 50%, transparent);
+
+    & > .bar {
+        display: flex;
+        justify-content: space-between;
+
+        padding-inline: 1em;
+        padding-top: 1em;
+
+        & > .path {
+            font-weight: bold;
+        }
+
+        & > .mode {
+            display: flex;
+            gap: 0.5em;
+
+            & > a {
+                background-color: color-mix(in srgb, var(--background) 70%, transparent);
+                padding-inline: 0.5em;
+                user-select: none;
+                cursor: pointer;
+                text-decoration: none;
+                color: inherit;
+
+                &:is(.active) {
+                    background-color: color-mix(in srgb, var(--primary) 70%, transparent);
+                }
+            }
+        }
+    }
 }
 
 .entries {

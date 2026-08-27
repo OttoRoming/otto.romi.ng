@@ -1,0 +1,8 @@
+services:
+  main:
+    build: .
+    ports: 61001:80
+    restart: unless-stopped
+    env_file:
+      - .env
+

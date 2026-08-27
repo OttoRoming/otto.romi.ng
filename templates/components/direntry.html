@@ -1,5 +1,7 @@
+{% if mode == "icons" %}
+
 <a
-    class="direntry"
+    class="direntry icons"
     title="{{ entry.name }}"
     {% if entry.preview_availible %}
         href="{{ url_for('preview', path=display_path + '/' + entry.name) }}"
@@ -33,3 +35,42 @@
     </div>
     <div class="name">{{ entry.name }}</div>
 </a>
+
+{% elif mode == "details" %}
+
+<a
+    class="direntry details"
+    title="{{ entry.name }}"
+    {% if entry.preview_availible %}
+        href="{{ url_for('preview', path=display_path + '/' + entry.name) }}"
+    {% else %}
+        href="{{ url_for('public', path=display_path + '/' + entry.name) }}"
+    {% endif %}
+>
+    <table>
+        <tbody>
+            <tr>
+                <td class="mode">
+                    {{ entry.mode }}
+                </td>
+                <td class="owner">
+                    {{ entry.owner }}
+                </td>
+                <td class="modified">
+                    {{ entry.modified_day }}
+                </td>
+                <td class="modified">
+                    {{ entry.modified_month }}
+                </td>
+                <td class="modified">
+                    {{ entry.modified_year }}
+                </td>
+                <td class="name">
+                    {{ entry.name }}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</a>
+
+{% endif %}
