@@ -63,6 +63,7 @@
             & > .name {
                 color: var(--blue);
                 font-weight: bold;
+                white-space: nowrap;
             }
         }
     }
