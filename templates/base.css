@@ -34,7 +34,7 @@
 *::after {
     box-sizing: border-box;
     image-rendering: pixelated;
-    font-family: "DotGothic", sans-serif;
+    font-family: monospace, sans-serif;
     text-decoration-thickness: 2px;
 }
 
