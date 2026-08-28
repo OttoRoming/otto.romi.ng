@@ -7,27 +7,30 @@ services:
       POSTGRES_USER: otto
       POSTGRES_PASSWORD: shushing_face
     volumes:
-      - ./data/db:/var/lib/postgresql:Z
+      - ./data/db:/var/lib/postgresql
 
   dbmate:
     image: ghcr.io/amacneil/dbmate:2.35
     container_name: dbmate
     working_dir: /
     environment:
-      DATABASE_URL: "postgres://otto:sushing_face@db:5432/roming?sslmode=disable"
+      DATABASE_URL: "postgres://otto:shushing_face@db:5432/roming?sslmode=disable"
     depends_on:
       - db
     volumes:
       - ./db:/db
     command: --wait migrate
-    # command: --migrations-dir /db/migrations --wait migrate
+  # command: --migrations-dir /db/migrations --wait migrate
 
   main:
     build: .
-    ports: 61001:80
+    ports:
+      - "61001:80"
     restart: unless-stopped
     depends_on:
       - db
       - dbmate
     env_file:
       - .env
+    volumes:
+      - /home/otto/shared/public:/public

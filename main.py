@@ -1,12 +1,10 @@
 import os
-import pickle
-import subprocess
-from pathlib import Path
-from typing import Any, Literal
-from uuid import UUID
 import pwd
 from datetime import datetime
-import asyncio
+from pathlib import Path
+from posix import access
+from typing import Any, Literal
+from uuid import UUID
 
 from quart import (
     Quart,
@@ -17,14 +15,14 @@ from quart import (
     request,
     send_file,
     url_for,
-    Response as QuartResponse
 )
-from werkzeug.exceptions import HTTPException
+from quart import Response as QuartResponse
 from werkzeug import Response as WerkResponse
+from werkzeug.exceptions import HTTPException
+
 import db
 
 type Response = QuartResponse | WerkResponse
-
 
 
 STORE_FILENAME = "store.pickle"
@@ -57,61 +55,28 @@ PREVIEW_EXT: dict[str, Literal["image", "video", "document"]] = {
 }
 
 
-# https://stackoverflow.com/questions/41505448/is-python-uuid-uuid4-strong-enough-for-password-reset-links
-def uuid4():
-    """Generate a cryptographically secure random UUID."""
-    return UUID(bytes=os.urandom(16), version=4)
-
-# class SessionStore:
-#     def __init__(self) -> None:
-#         self.sessions: dict[UUID, int] = {}
-#
-#     def dump(self) -> None:
-#         with open(STORE_FILENAME, "wb") as f:
-#             pickle.dump(self, f)
-#
-#     def new_session(self, level: int) -> UUID:
-#         session = uuid4()
-#         self.sessions[session] = level
-#
-#         self.dump()
-#         return session
-#
-#     def remove_session(self, session: UUID | None = None) -> None:
-#         if session is None:
-#             session_str = request.cookies.get("session")
-#             if session_str is None:
-#                 return None
-#
-#             session = UUID(session_str)
-#
-#         del self.sessions[session]
-#
-#     def get_access_level(self, session: UUID | None = None) -> int | None:
-#         if session is None:
-#             session_str = request.cookies.get("session")
-#             if session_str is None:
-#                 return None
-#
-#             session = UUID(session_str)
-#
-#         return self.sessions.get(session)
-
-
 app = Quart(__name__)
 
-# try:
-#     with open(STORE_FILENAME, "rb") as f:
-#         store = pickle.load(f)
-# except FileNotFoundError:
-#     store = SessionStore()
+
+async def get_access_level() -> int:
+    token = request.cookies.get("token")
+    if token is None:
+        return 0
+
+    try:
+        uuid = UUID(token)
+    except ValueError:
+        return 0
+
+    access_level = await db.get_session_access_level(uuid)
+    if access_level is None:
+        return 0
+
+    return access_level
+
 
 async def generate_context(other: dict[str, Any] = {}) -> dict[str, Any]:
-    token = request.cookies.get("token")
-    access_level: int | None = None
-
-    if token is not None:
-        access_level = await db.get_session_access_level(UUID(token))
+    access_level = await get_access_level()
 
     return {
         "access_level": access_level,
@@ -121,7 +86,6 @@ async def generate_context(other: dict[str, Any] = {}) -> dict[str, Any]:
 
 @app.errorhandler(HTTPException)
 async def error(error: HTTPException) -> str:
-
     context = await generate_context({"code": error.code, "name": error.name})
     return await render_template("error.html", **context)
 
@@ -155,7 +119,7 @@ async def login_post(path: str) -> Response:
 
     response = await make_response(redirect(url_for("public", path=path)))
     token = await db.login(password, user_agent, client_ip)
-    
+
     response.set_cookie("token", str(token))
     return response
 
@@ -198,9 +162,7 @@ async def preview(path: str) -> Response | str:
 async def public(path: str = "") -> Response | str:
     login_response = await make_response(redirect(url_for("login", path=path)))
 
-    access_level = store.get_access_level()
-    if access_level is None:
-        return login_response
+    access_level = await get_access_level()
 
     # https://en.wikipedia.org/wiki/Directory_traversal_attack
     if ".." in path:
@@ -211,13 +173,11 @@ async def public(path: str = "") -> Response | str:
         mode = "icons"
 
     entries = []
-    home = os.getenv("HOME")
 
-    p = Path(f"{home}/shared/public")
+    p = Path("/public")
     realpath = p / path
     display_path = Path(path)
     parent_path = display_path.parent
-    print(realpath)
 
     if os.path.isdir(realpath):
         for entry in os.scandir(realpath):
@@ -236,14 +196,19 @@ async def public(path: str = "") -> Response | str:
                 type = "dir"
 
             stat = entry.stat()
-            owner_info = pwd.getpwuid(stat.st_uid)
+
+            try:
+                owner = pwd.getpwuid(stat.st_uid).pw_name
+            except KeyError:  # If the userid is not on the system
+                owner = str(stat.st_uid)
+
             dt = datetime.fromtimestamp(stat.st_mtime)
 
             entries.append(
                 {
                     "name": entry.name,
                     "mode": oct(stat.st_mode),
-                    "owner": owner_info.pw_name,
+                    "owner": owner,
                     "type": type,
                     "modified_day": dt.strftime("%d"),
                     "modified_month": dt.strftime("%b"),
@@ -257,12 +222,11 @@ async def public(path: str = "") -> Response | str:
                 "display_path": str(display_path),
                 "parent_path": str(parent_path),
                 "entries": entries,
-                "mode": mode
+                "mode": mode,
             }
         )
         return await render_template("public/dir.html", **context)
     elif os.path.isfile(realpath):
-
         return await send_file(realpath)
     else:
         abort(404)
@@ -271,6 +235,7 @@ async def public(path: str = "") -> Response | str:
 @app.before_serving
 async def init():
     await db.init()
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=80)
