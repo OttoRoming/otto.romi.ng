@@ -6,6 +6,7 @@ services:
       POSTGRES_DB: roming
       POSTGRES_USER: otto
       POSTGRES_PASSWORD: shushing_face
+    restart: unless-stopped
     volumes:
       - ./data/db:/var/lib/postgresql
 
@@ -15,6 +16,7 @@ services:
     working_dir: /
     environment:
       DATABASE_URL: "postgres://otto:shushing_face@db:5432/roming?sslmode=disable"
+    restart: unless-stopped
     depends_on:
       - db
     volumes:
