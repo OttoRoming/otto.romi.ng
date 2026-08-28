@@ -16,7 +16,7 @@ services:
     working_dir: /
     environment:
       DATABASE_URL: "postgres://otto:shushing_face@db:5432/roming?sslmode=disable"
-    restart: unless-stopped
+    restart: no
     depends_on:
       - db
     volumes:
