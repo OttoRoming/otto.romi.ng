@@ -5,7 +5,7 @@
 {% endblock %}
 {% block content %}
     <h2>Admin panel</h2>
-    {% if len(passwords) > 0 %}
+    {% if passwords|length > 0 %}
         <table>
             <thead>
                 <tr>
