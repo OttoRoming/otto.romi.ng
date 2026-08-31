@@ -68,8 +68,10 @@ async def login(password: str, user_agent: str | None, client_ip: str) -> UUID |
      """,
         password,
     )
-    password_id: UUID | None = password_row["id"] if password_row else None
-    access_level: int | None = password_row["access_level"] if password_row else None
+    if password_row is None:
+        return None
+    password_id: UUID = password_row["id"]
+    access_level: int = password_row["access_level"]
 
     await conn.execute(
         """
