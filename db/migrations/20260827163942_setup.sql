@@ -18,6 +18,7 @@ CREATE TABLE logins (
 CREATE TABLE sessions (
     token uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     access_level smallint NOT NULL,
+    is_admin boolean NOT NULL DEFAULT false,
     created_at timestamptz NOT NULL DEFAULT NOW()
 );
 
@@ -26,4 +27,3 @@ CREATE TABLE sessions (
 DROP TABLE passwords;
 DROP TABLE logins;
 DROP TABLE sessions;
-

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block style %}
+    {{ super() }}
+    <!--{% include("public/dir.css") %}-->
+{% endblock %}
+{% block content %}
+    <h2>Admin panel</h2>
+    <table>
+        <thead>
+            <tr>
+                {% for key in passwords[0].keys() %}
+                    <th>{{ key }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for password in passwords %}
+                <tr>
+                    {% for value in password.values() %}
+                        <td>{{ value }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <form action="password" method="post">
+        <input type="text" name="password" />
+        <input type="number" name="access_level" />
+        <input type="submit" />
+    </form>
+{% endblock %}

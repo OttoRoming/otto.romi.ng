@@ -3,7 +3,6 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <!-- <link rel="stylesheet" href="/style.css" /> -->
         <style>
             {% block style %}
             {% include "base.css" %}
@@ -14,23 +13,11 @@
     </head>
 
     <body>
-        <!--<div class="enter">
-            <label class="star">
-                <div class="shard"></div>
-                <div class="shard"></div>
-                <div class="shard"></div>
-                <div class="shard"></div>
-                <div class="shard"></div>
-                <strong>Enter</strong>
-                <input type="checkbox" id="enter-checkbox">
-                Enter-->
-            <!--<label/>-->
-        <!--</div>-->
         <main class="base">
-            {% if access_level %}
+            {% if session %}
             <div class="account">
                 <div class="header">Logged in</div>
-                <div>Access level: {{ access_level }}</div>
+                <div>Access level: {{ session.access_level }}</div>
                 <a href="/signout">Sign out</a>
             </div>
             {% endif %}
@@ -38,12 +25,7 @@
             <h1 class="title">
                 <a href="/">otto.romi.ng</a>
             </h1>
-            <!--<label class="c left">
-                <input type="checkbox" id="left-checkbox" />
-            </label>
-            <label class="c right">
-                <input type="checkbox" id="right-checkbox" />
-            </label>-->
+
 
             {% block content %} {% endblock %}
 

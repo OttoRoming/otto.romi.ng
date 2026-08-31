@@ -1,13 +1,36 @@
-from contextlib import asynccontextmanager
-import asyncpg as pg
+import os
 from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+from dataclasses import dataclass
+from datetime import datetime
 from ipaddress import IPv4Address, IPv6Address
 from uuid import UUID
+
+import asyncpg as pg
 
 type IPAddress = IPv4Address | IPv6Address
 
 
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
+
 conn: pg.Connection
+
+
+@dataclass
+class Session:
+    token: UUID
+    access_level: int
+    is_admin: bool
+    created_at: datetime
+
+
+@dataclass
+class Password:
+    id: UUID
+    password: str
+    access_level: int
+    created_at: datetime
+
 
 async def init() -> None:
     global conn
@@ -18,44 +41,97 @@ async def init() -> None:
         host="db",
     )
 
+
 @asynccontextmanager
 async def transaction() -> AsyncIterator[None]:
     async with conn.transaction():
         yield
 
+
 async def login(password: str, user_agent: str | None, client_ip: str) -> UUID | None:
-    password_row = await conn.fetchrow("""
+    if password == ADMIN_PASSWORD:
+        session_row = await conn.fetchrow(
+            """
+            INSERT INTO sessions (access_level, is_admin)
+            VALUES (100, true)
+            RETURNING token
+       """
+        )
+        assert session_row is not None
+        return session_row["token"]
+
+    password_row = await conn.fetchrow(
+        """
         SELECT (id, access_level)
         FROM passwords
         WHERE password = $1;
-     """, password)
+     """,
+        password,
+    )
     password_id: UUID | None = password_row["id"] if password_row else None
     access_level: int | None = password_row["access_level"] if password_row else None
 
-    await conn.execute("""
+    await conn.execute(
+        """
         INSERT INTO logins (password_id, user_agent, client_ip)
         VALUES ($1, $2, $3::inet);
-   """, password_id, user_agent, client_ip)
+   """,
+        password_id,
+        user_agent,
+        client_ip,
+    )
 
     if access_level:
-        session_row = await conn.fetchrow("""
+        session_row = await conn.fetchrow(
+            """
             INSERT INTO sessions (access_level)
             VALUES ($1)
             RETURNING token
-       """, access_level)
+       """,
+            access_level,
+        )
+        assert session_row is not None
 
         session_token: UUID = session_row["token"]
         return session_token
-    
+
     return None
 
-async def get_session_access_level(token: UUID) -> int | None:
-    session = await conn.fetchrow("""
-        SELECT (access_level)
+
+async def get_session_by_token(token: UUID) -> Session | None:
+    session = await conn.fetchrow(
+        """
+        SELECT *
         FROM sessions
         WHERE token = $1;
-    """, token)
-    access_level = session["access_level"] if session else None
+    """,
+        token,
+    )
 
-    return access_level
+    return Session(**dict(session)) if session else None
 
+
+async def get_passwords() -> list[Password]:
+    rows = await conn.fetch(
+        """
+        SELECT *
+        FROM passwords;
+    """
+    )
+
+    return [Password(**dict(row)) for row in rows]
+
+
+async def add_password(password: str, access_level: int) -> Password:
+    row = await conn.fetchrow(
+        """
+        INSERT INTO passwords (password, access_level)
+        VALUES ($1, $2)
+        RETURNING *;
+    """,
+        password,
+        access_level,
+    )
+    assert row is not None
+
+    return Password(**dict(row))

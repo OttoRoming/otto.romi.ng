@@ -24,6 +24,11 @@ services:
     command: --wait migrate
   # command: --migrations-dir /db/migrations --wait migrate
 
+  geoip:
+    image: ghcr.io/observabilitystack/geoip-api:2026-35
+    container_name: geoip
+    restart: unless-stopped
+
   main:
     build: .
     ports:
@@ -32,6 +37,7 @@ services:
     depends_on:
       - db
       - dbmate
+      - geoip
     env_file:
       - .env
     volumes:

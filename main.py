@@ -1,5 +1,6 @@
 import os
 import pwd
+from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
 from posix import access
@@ -24,62 +25,34 @@ import db
 
 type Response = QuartResponse | WerkResponse
 
-
-STORE_FILENAME = "store.pickle"
-
-PREVIEW_EXT: dict[str, Literal["image", "video", "document"]] = {
-    # Image formats
-    ".jpg": "image",
-    ".jpeg": "image",
-    ".jpe": "image",
-    ".jif": "image",
-    ".jfif": "image",
-    ".png": "image",
-    ".gif": "image",
-    ".svg": "image",
-    ".svgz": "image",
-    ".webp": "image",
-    ".avif": "image",
-    ".avifs": "image",
-    ".apng": "image",
-    ".ico": "image",
-    ".cur": "image",
-    ".bmp": "image",
-    ".dib": "image",
-    # Video formats
-    ".mp4": "video",
-    ".m4v": "video",
-    ".webm": "video",
-    # Document formats
-    ".pdf": "document",
-}
-
-
 app = Quart(__name__)
 
 
-async def get_access_level() -> int:
+async def authenticate_user() -> db.Session | None:
     token = request.cookies.get("token")
     if token is None:
-        return 0
+        return None
 
     try:
         uuid = UUID(token)
     except ValueError:
-        return 0
+        return None
 
-    access_level = await db.get_session_access_level(uuid)
-    if access_level is None:
-        return 0
+    return await db.get_session_by_token(uuid)
 
-    return access_level
+
+async def login_response() -> Response:
+    response = await make_response(redirect(url_for("login", path=request.url)))
+    return response
 
 
 async def generate_context(other: dict[str, Any] = {}) -> dict[str, Any]:
-    access_level = await get_access_level()
+    session = await authenticate_user()
+    if session is None:
+        return other
 
     return {
-        "access_level": access_level,
+        "session": asdict(session),
         **other,
     }
 
@@ -96,16 +69,15 @@ async def index() -> str:
     return await render_template("index.html", **context)
 
 
-@app.get("/login/", defaults={"path": ""})
-@app.get("/login/<path:path>")
-async def login(path: str) -> str:
+@app.get("/login/")
+async def login() -> str:
     context = await generate_context()
+
     return await render_template("login.html", **context)
 
 
-@app.post("/login/", defaults={"path": ""})
-@app.post("/login/<path:path>")
-async def login_post(path: str) -> Response:
+@app.post("/login/")
+async def login_post() -> Response:
     form = await request.form
     password = form.get("password")
     if password is None:
@@ -117,7 +89,11 @@ async def login_post(path: str) -> Response:
     if client_ip is None:
         abort(400)
 
-    response = await make_response(redirect(url_for("public", path=path)))
+    redirect_url = request.args.get("redirect")
+    if redirect_url is None:
+        redirect_url = url_for("index")
+
+    response = await make_response(redirect(redirect_url))
     token = await db.login(password, user_agent, client_ip)
 
     response.set_cookie("token", str(token))
@@ -127,49 +103,24 @@ async def login_post(path: str) -> Response:
 @app.get("/signout")
 async def signout() -> Response:
     response = await make_response(redirect(url_for("index")))
-    response.delete_cookie("session")
+    response.delete_cookie("token")
 
     return response
-
-
-@app.get("/preview/<path:path>")
-async def preview(path: str) -> Response | str:
-    return await make_response(redirect(url_for("public", path=path)))
-
-    # login_response = make_response(redirect(url_for("login", path=path)))
-
-    # access_level = store.get_access_level()
-    # if access_level is None:
-    #     return login_response
-
-    # # https://en.wikipedia.org/wiki/Directory_traversal_attack
-    # if ".." in path:
-    #     abort(400)
-
-    # type = PREVIEW_EXT.get(os.path.splitext(path)[1])
-    # if type is None:
-
-    # filename = Path(path).name
-
-    # return render_template(
-    #     "preview.html",
-    #     **generate_context({"type": type, "path": path, "filename": filename}),
-    # )
 
 
 @app.get("/public/", defaults={"path": ""})
 @app.get("/public/<path:path>")
 async def public(path: str = "") -> Response | str:
-    login_response = await make_response(redirect(url_for("login", path=path)))
-
-    access_level = await get_access_level()
+    session = await authenticate_user()
+    if session is None:
+        return await login_response()
 
     # https://en.wikipedia.org/wiki/Directory_traversal_attack
     if ".." in path:
         abort(400)
 
     mode = request.args.get("mode")
-    if mode is None:
+    if mode not in ["icons", "details"]:
         mode = "icons"
 
     entries = []
@@ -181,11 +132,11 @@ async def public(path: str = "") -> Response | str:
 
     if os.path.isdir(realpath):
         for entry in os.scandir(realpath):
-            if entry.name == ".confidential" and access_level < 2:
+            if entry.name == ".confidential" and session.access_level < 2:
                 abort(451)
 
             extension = os.path.splitext(entry.path)[1]
-            preview_availible = extension.lower() in PREVIEW_EXT
+            # preview_availible = extension.lower() in PREVIEW_EXT
 
             type = ""
             if entry.is_symlink():
@@ -213,7 +164,7 @@ async def public(path: str = "") -> Response | str:
                     "modified_day": dt.strftime("%d"),
                     "modified_month": dt.strftime("%b"),
                     "modified_year": dt.strftime("%Y"),
-                    "preview_available": preview_availible,
+                    # "preview_available": preview_availible,
                 }
             )
 
@@ -230,6 +181,37 @@ async def public(path: str = "") -> Response | str:
         return await send_file(realpath)
     else:
         abort(404)
+
+
+@app.get("/admin/")
+async def admin() -> Response | str:
+    session = await authenticate_user()
+    if session is None:
+        return await login_response()
+    if not session.is_admin:
+        abort(403)
+
+    passwords = await db.get_passwords()
+    context = await generate_context({"passwords": [asdict(p) for p in passwords]})
+    return await render_template("admin.html", **context)
+
+
+@app.post("/admin/password")
+async def admin_password() -> Response:
+    session = await authenticate_user()
+    if session is None:
+        return await login_response()
+
+    form = await request.form
+    password = form.get("password")
+    if password is None:
+        abort(400)
+    access_level = form.get("access_level")
+    if access_level is None:
+        abort(400)
+
+    await db.add_password(password, int(access_level))
+    return await make_response(redirect(url_for("admin")))
 
 
 @app.before_serving
