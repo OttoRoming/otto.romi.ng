@@ -62,7 +62,7 @@ async def login(password: str, user_agent: str | None, client_ip: str) -> UUID |
 
     password_row = await conn.fetchrow(
         """
-        SELECT (id, access_level)
+        SELECT *
         FROM passwords
         WHERE password = $1;
      """,
@@ -70,7 +70,6 @@ async def login(password: str, user_agent: str | None, client_ip: str) -> UUID |
     )
     if password_row is None:
         return None
-    print(password_row)
     password_id: UUID = password_row["id"]
     access_level: int = password_row["access_level"]
 
