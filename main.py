@@ -89,7 +89,7 @@ async def login_post() -> Response:
     if client_ip is None:
         abort(400)
 
-    redirect_url = request.args.get("redirect")
+    redirect_url = request.args.get("path")
     if redirect_url is None:
         redirect_url = url_for("index")
 
