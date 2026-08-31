@@ -5,24 +5,26 @@
 {% endblock %}
 {% block content %}
     <h2>Admin panel</h2>
-    <table>
-        <thead>
-            <tr>
-                {% for key in passwords[0].keys() %}
-                    <th>{{ key }}</th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for password in passwords %}
+    {% if passwords.len() > 0 %}
+        <table>
+            <thead>
                 <tr>
-                    {% for value in password.values() %}
-                        <td>{{ value }}</td>
+                    {% for key in passwords[0].keys() %}
+                        <th>{{ key }}</th>
                     {% endfor %}
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                {% for password in passwords %}
+                    <tr>
+                        {% for value in password.values() %}
+                            <td>{{ value }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
     <form action="password" method="post">
         <input type="text" name="password" />
         <input type="number" name="access_level" />
