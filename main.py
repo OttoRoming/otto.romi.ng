@@ -112,7 +112,7 @@ async def public(path: str = "") -> Response | str:
             if entry.name == ".confidential" and session.access_level < 2:
                 abort(451)
 
-            extension = os.path.splitext(entry.path)[1]
+            # extension = os.path.splitext(entry.path)[1]
             # preview_availible = extension.lower() in PREVIEW_EXT
 
             type = ""
