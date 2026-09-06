@@ -24,6 +24,16 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked
 
 
+# Dev image with uv: re-syncs the venv from pyproject.toml/uv.lock on every
+# start, so it is never stale. The venv lives at /venv, outside the bind-mounted
+# /app, to avoid writing root-owned files into the host's .venv.
+FROM ghcr.io/astral-sh/uv:python3.14-trixie-slim AS dev
+ENV UV_PROJECT_ENVIRONMENT=/venv
+ENV PATH="/venv/bin:$PATH"
+ENV PYTHONUNBUFFERED=1
+WORKDIR /app
+CMD ["uv", "run", "--frozen", "main.py"]
+
 # Then, use a final image without uv
 FROM python:3.14-slim-trixie
 

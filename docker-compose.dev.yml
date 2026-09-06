@@ -1,13 +1,12 @@
 services:
   main:
-    restart: "no"
+    build:
+      context: .
+      target: dev
+    restart: unless-stopped
     environment:
       QUART_DEBUG: "1"
     volumes:
       - .:/app
-      - appvenv:/app/.venv
     ports:
       - "61001:80"
-
-volumes:
-  appvenv:
