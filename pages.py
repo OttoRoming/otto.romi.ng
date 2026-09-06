@@ -1,5 +1,4 @@
 from dataclasses import asdict
-from typing import Any
 from uuid import UUID
 
 import minify_html
@@ -24,7 +23,8 @@ async def authenticate_user() -> db.Session | None:
 
 async def render_template(template: str, **kwargs) -> str:
     session = await authenticate_user()
+    session_dict = asdict(session) if session else {}
 
-    raw = await quart.render_template(template, session=session, **kwargs)
+    raw = await quart.render_template(template, session=session_dict, **kwargs)
     minified = minify_html.minify(raw, minify_css=True)
     return minified
