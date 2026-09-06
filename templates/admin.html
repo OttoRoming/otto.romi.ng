@@ -3,21 +3,21 @@
     {{ super() }}
     <!--{% include("public/dir.css") %}-->
 {% endblock %}
-{% block content %}
-    <h2>Admin panel</h2>
-    {% if passwords|length > 0 %}
+
+{% macro table(rows) %}
+    {% if rows|length > 0 %}
         <table>
             <thead>
                 <tr>
-                    {% for key in passwords[0].keys() %}
+                    {% for key in rows[0].keys() %}
                         <th>{{ key }}</th>
                     {% endfor %}
                 </tr>
             </thead>
             <tbody>
-                {% for password in passwords %}
+                {% for row in rows %}
                     <tr>
-                        {% for value in password.values() %}
+                        {% for value in row.values() %}
                             <td>{{ value }}</td>
                         {% endfor %}
                     </tr>
@@ -25,6 +25,11 @@
             </tbody>
         </table>
     {% endif %}
+{% endmacro %}
+
+{% block content %}
+    <h2>Admin panel</h2>
+    {{table(passwords)}}
     <form action="password" method="post">
         <input type="text" name="password" />
         <input type="number" name="access_level" />
