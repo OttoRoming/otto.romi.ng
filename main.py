@@ -148,6 +148,8 @@ async def public(path: str = "") -> Response | str:
                 }
             )
 
+        entries.sort(key=lambda x: (x["type"] != "dir", x["name"].lower()))
+
         return await render_template(
             "public/dir.html",
             display_path=str(display_path),
