@@ -12,7 +12,6 @@ from quart import (
     abort,
     make_response,
     redirect,
-    render_template,
     request,
     send_file,
     url_for,
@@ -22,23 +21,11 @@ from werkzeug import Response as WerkResponse
 from werkzeug.exceptions import HTTPException
 
 import db
+from pages import authenticate_user, render_template
 
 type Response = QuartResponse | WerkResponse
 
 app = Quart(__name__)
-
-
-async def authenticate_user() -> db.Session | None:
-    token = request.cookies.get("token")
-    if token is None:
-        return None
-
-    try:
-        uuid = UUID(token)
-    except ValueError:
-        return None
-
-    return await db.get_session_by_token(uuid)
 
 
 async def login_response() -> Response:
@@ -46,34 +33,27 @@ async def login_response() -> Response:
     return response
 
 
-async def generate_context(other: dict[str, Any] = {}) -> dict[str, Any]:
-    session = await authenticate_user()
-    if session is None:
-        return other
-
-    return {
-        "session": asdict(session),
-        **other,
-    }
-
-
 @app.errorhandler(HTTPException)
 async def error(error: HTTPException) -> str:
-    context = await generate_context({"code": error.code, "name": error.name})
-    return await render_template("error.html", **context)
+    return await render_template("error.html")
 
 
 @app.get("/")
 async def index() -> str:
-    context = await generate_context()
-    return await render_template("index.html", **context)
+    return await render_template("index.html")
+
+
+@app.get("/robots.txt")
+async def robots() -> Response:
+    response = await make_response()
+    response.content_type = "text/plain"
+    response.data = "User-agent: *\nAllow: /".encode("utf-8")
+    return response
 
 
 @app.get("/login/")
 async def login() -> str:
-    context = await generate_context()
-
-    return await render_template("login.html", **context)
+    return await render_template("login.html")
 
 
 @app.post("/login/")
@@ -168,15 +148,13 @@ async def public(path: str = "") -> Response | str:
                 }
             )
 
-        context = await generate_context(
-            {
-                "display_path": str(display_path),
-                "parent_path": str(parent_path),
-                "entries": entries,
-                "mode": mode,
-            }
+        return await render_template(
+            "public/dir.html",
+            display_path=str(display_path),
+            parent_path=str(parent_path),
+            entries=entries,
+            mode=mode,
         )
-        return await render_template("public/dir.html", **context)
     elif os.path.isfile(realpath):
         return await send_file(realpath)
     else:
@@ -192,8 +170,8 @@ async def admin() -> Response | str:
         abort(403)
 
     passwords = await db.get_passwords()
-    context = await generate_context({"passwords": [asdict(p) for p in passwords]})
-    return await render_template("admin.html", **context)
+    await db.get_logins()
+    return await render_template("admin.html", passwords=[asdict(p) for p in passwords])
 
 
 @app.post("/admin/password")

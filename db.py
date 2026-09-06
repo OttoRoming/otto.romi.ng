@@ -17,18 +17,18 @@ conn: pg.Connection
 
 
 @dataclass
-class Session:
-    token: UUID
-    access_level: int
-    is_admin: bool
-    created_at: datetime
-
-
-@dataclass
 class Password:
     id: UUID
     password: str
     access_level: int
+    created_at: datetime
+
+
+@dataclass
+class Session:
+    token: UUID
+    access_level: int
+    is_admin: bool
     created_at: datetime
 
 
@@ -137,3 +137,38 @@ async def add_password(password: str, access_level: int) -> Password:
     assert row is not None
 
     return Password(**dict(row))
+
+
+@dataclass
+class LoginPassword:
+    id: UUID
+    password: Password
+    user_agent: str
+    client_ip: IPAddress
+    created_at: datetime
+
+
+async def get_logins() -> list[LoginPassword]:
+    rows = await conn.fetch(
+        """
+        SELECT
+            json_build_object(
+                'id', l.id,
+                'user_agent', l.user_agent,
+                'client_ip', l.client_ip,
+                'created_at', l.created_at
+            ) AS login,
+            json_build_object(
+                'id', p.id,
+                'password', p.password,
+                'access_level', p.access_level,
+                'created_at', p.created_at
+            ) AS password
+        FROM logins AS l
+        LEFT JOIN passwords AS p
+        ON l.password_id = p.id;
+    """
+    )
+
+    print([row for row in rows][0])
+    return []

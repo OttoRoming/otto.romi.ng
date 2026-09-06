@@ -7,6 +7,7 @@ requires-python = ">=3.14"
 dependencies = [
     "asyncpg>=0.31.0",
     "dotenv>=0.9.9",
+    "minify-html>=0.18.1",
     "quart>=0.22.0",
 ]
 
