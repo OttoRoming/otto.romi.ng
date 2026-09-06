@@ -3,9 +3,6 @@ import pwd
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
-from posix import access
-from typing import Any, Literal
-from uuid import UUID
 
 from quart import (
     Quart,
