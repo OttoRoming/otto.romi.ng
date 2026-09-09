@@ -178,11 +178,10 @@ async def admin() -> Response | str:
         log = asdict(login)
 
         geo = await get_ip_geo(login.client_ip)
-        if geo is not None:
-            country = geo.get("country", "Unknown")
-        else:
-            country = "Unknown"
-        log["country"] = country
+        location = geo.get("country", "Unknown") if geo else "Unknown"
+        location += ", " + geo.get("city", "Unknown") if geo else ""
+
+        log["location"] = location
 
         logins.append(log)
 
