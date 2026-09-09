@@ -69,6 +69,15 @@ async def login(password: str, user_agent: str | None, client_ip: str) -> UUID |
         password,
     )
     if password_row is None:
+        await conn.execute(
+            """
+            INSERT INTO logins (user_agent, client_ip)
+            VALUES ($1, $2::inet);
+        """,
+            user_agent,
+            client_ip,
+        )
+
         return None
     password_id: UUID = password_row["id"]
     access_level: int = password_row["access_level"]
