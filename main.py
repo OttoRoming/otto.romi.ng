@@ -18,7 +18,7 @@ from werkzeug import Response as WerkResponse
 from werkzeug.exceptions import HTTPException
 
 import db
-from pages import authenticate_user, render_template
+from pages import authenticate_user, get_ip_geo, render_template
 
 type Response = QuartResponse | WerkResponse
 
@@ -168,9 +168,27 @@ async def admin() -> Response | str:
     if not session.is_admin:
         abort(403)
 
-    passwords = await db.get_passwords()
-    await db.get_logins()
-    return await render_template("admin.html", passwords=[asdict(p) for p in passwords])
+    db_passwords = await db.get_passwords()
+    db_logins = await db.get_logins()
+
+    logins = []
+    for login in db_logins:
+        log = asdict(login)
+
+        geo = await get_ip_geo(login.client_ip)
+        if geo is not None:
+            country = geo.get("country", "Unknown")
+        else:
+            country = "Unknown"
+        log["country"] = country
+
+        logins.append(log)
+
+    return await render_template(
+        "admin.html",
+        passwords=[asdict(p) for p in db_passwords],
+        logins=logins,
+    )
 
 
 @app.post("/admin/password")

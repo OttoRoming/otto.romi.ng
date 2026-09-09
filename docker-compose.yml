@@ -28,6 +28,8 @@ services:
     image: ghcr.io/observabilitystack/geoip-api:2026-35
     container_name: geoip
     restart: unless-stopped
+    ports:
+      - "61002:8080"
 
   main:
     build: .

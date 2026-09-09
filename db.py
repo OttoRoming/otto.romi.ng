@@ -140,35 +140,36 @@ async def add_password(password: str, access_level: int) -> Password:
 
 
 @dataclass
-class LoginPassword:
+class Login:
     id: UUID
-    password: Password
+    password_id: UUID
     user_agent: str
     client_ip: IPAddress
     created_at: datetime
 
 
-async def get_logins() -> list[LoginPassword]:
+async def get_logins() -> list[Login]:
     rows = await conn.fetch(
         """
-        SELECT
-            json_build_object(
-                'id', l.id,
-                'user_agent', l.user_agent,
-                'client_ip', l.client_ip,
-                'created_at', l.created_at
-            ) AS login,
-            json_build_object(
-                'id', p.id,
-                'password', p.password,
-                'access_level', p.access_level,
-                'created_at', p.created_at
-            ) AS password
-        FROM logins AS l
-        LEFT JOIN passwords AS p
-        ON l.password_id = p.id;
+        -- SELECT
+        --     json_build_object(
+        --         'id', l.id,
+        --         'user_agent', l.user_agent,
+        --         'client_ip', l.client_ip,
+        --         'created_at', l.created_at
+        --     ) AS login,
+        --     json_build_object(
+        --         'id', p.id,
+        --         'password', p.password,
+        --         'access_level', p.access_level,
+        --         'created_at', p.created_at
+        --     ) AS password
+        -- FROM logins AS l
+        -- LEFT JOIN passwords AS p
+        -- ON l.password_id = p.id;
+        SELECT *
+        FROM logins;
     """
     )
 
-    print([row for row in rows][0])
-    return []
+    return [Login(**dict(row)) for row in rows]

@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% block style %}
     {{ super() }}
-    <!--{% include("public/dir.css") %}-->
+    {% include("admin.css") %}
 {% endblock %}
 
 {% macro table(rows) %}
     {% if rows|length > 0 %}
-        <table>
+        <table class="table">
             <thead>
                 <tr>
                     {% for key in rows[0].keys() %}
@@ -29,10 +29,13 @@
 
 {% block content %}
     <h2>Admin panel</h2>
+
     {{table(passwords)}}
     <form action="password" method="post">
         <input type="text" name="password" />
         <input type="number" name="access_level" />
         <input type="submit" />
     </form>
+
+    {{table(logins)}}
 {% endblock %}

@@ -1,0 +1,15 @@
+.table {
+    table-layout: fixed;
+    width: 100%;
+
+    &>tbody {
+        &>tr {
+            &>td {
+                border: 1px solid var(--foreground);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
+    }
+}
