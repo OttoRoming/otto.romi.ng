@@ -32,7 +32,7 @@ async def login_response() -> Response:
 
 @app.errorhandler(HTTPException)
 async def error(error: HTTPException) -> str:
-    return await render_template("error.html")
+    return await render_template("error.html", code=error.code)
 
 
 @app.get("/")
