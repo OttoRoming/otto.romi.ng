@@ -173,16 +173,23 @@ async def admin() -> Response | str:
     db_passwords = await db.get_passwords()
     db_logins = await db.get_logins()
 
+    ip_locations = {}
+    for login in db_logins:
+        ip_locations[login.client_ip] = None
+    for ip in ip_locations.keys():
+        geo = await get_ip_geo(ip)
+        if geo is not None:
+            ip_locations[ip] = geo
+
     logins = []
     for login in db_logins:
         log = asdict(login)
 
-        geo = await get_ip_geo(login.client_ip)
+        geo = ip_locations[login.client_ip]
         location = geo.get("country", "Unknown") if geo else "Unknown"
         location += ", " + geo.get("city", "Unknown") if geo else ""
 
         log["location"] = location
-
         logins.append(log)
 
     return await render_template(
