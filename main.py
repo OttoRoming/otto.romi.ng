@@ -62,7 +62,9 @@ async def login_post() -> Response:
 
     user_agent = request.headers.get("User-Agent")
 
-    client_ip = request.remote_addr
+    client_ip = request.headers.get("X-Forwarded-For")
+    if client_ip is None:
+        client_ip = request.remote_addr
     if client_ip is None:
         abort(400)
 
