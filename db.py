@@ -1,6 +1,5 @@
 import os
 from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime
 from ipaddress import IPv4Address, IPv6Address
@@ -42,7 +41,6 @@ async def init() -> None:
     )
 
 
-@asynccontextmanager
 async def transaction() -> AsyncIterator[None]:
     async with conn.transaction():
         yield
